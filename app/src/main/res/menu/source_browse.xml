@@ -43,4 +43,11 @@
         app:iconTint="?attr/colorOnPrimary"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/action_import_all"
+        android:icon="@drawable/ic_skip_previous_24dp"
+        android:title="@string/import_all"
+        app:iconTint="?attr/colorOnPrimary"
+        app:showAsAction="ifRoom" />
+
 </menu>

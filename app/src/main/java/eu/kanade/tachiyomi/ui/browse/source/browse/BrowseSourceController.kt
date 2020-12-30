@@ -310,8 +310,52 @@ open class BrowseSourceController(bundle: Bundle) :
             R.id.action_list -> setDisplayMode(DisplayMode.LIST)
             R.id.action_open_in_web_view -> openInWebView()
             R.id.action_local_source_help -> openLocalSourceHelpGuide()
+            R.id.action_import_all -> importAll()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun importAll() {
+        val list = adapter?.currentItems ?: return
+        for (item in list) {
+            val activity = activity ?: return
+            val manga = (item as? SourceItem)?.manga ?: return
+            val position = adapter?.currentItems?.indexOf(item) ?: return
+            val categories = presenter.getCategories()
+            val defaultCategoryId = preferences.defaultCategory()
+            val defaultCategory = categories.find { it.id == defaultCategoryId }
+
+            when {
+                // Default category set
+                defaultCategory != null -> {
+                    presenter.moveMangaToCategory(manga, defaultCategory)
+
+                    presenter.changeMangaFavorite(manga)
+                    adapter?.notifyItemChanged(position)
+                    activity.toast(activity.getString(R.string.manga_added_library))
+                }
+
+                // Automatic 'Default' or no categories
+                defaultCategoryId == 0 || categories.isEmpty() -> {
+                    presenter.moveMangaToCategory(manga, null)
+
+                    presenter.changeMangaFavorite(manga)
+                    adapter?.notifyItemChanged(position)
+                    activity.toast(activity.getString(R.string.manga_added_library))
+                }
+
+                // Choose a category
+                else -> {
+                    val ids = presenter.getMangaCategoryIds(manga)
+                    val preselected = ids.mapNotNull { id ->
+                        categories.indexOfFirst { it.id == id }.takeIf { it != -1 }
+                    }.toTypedArray()
+
+                    ChangeMangaCategoriesDialog(this, listOf(manga), categories, preselected)
+                        .showDialog(router)
+                }
+            }
+        }
     }
 
     private fun openInWebView() {
